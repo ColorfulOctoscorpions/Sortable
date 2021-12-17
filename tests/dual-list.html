@@ -55,9 +55,25 @@
 			},
 			onUpdate: (event) => {
 				console.log('onUpdate', event);
+				if (event.newIndex === event.to.children.length) {
+					event.to.append(event.item);
+				} else {
+					event.to.insertBefore(event.item, event.to.children[event.newIndex]);
+				}
+				// Alternatively/complementarly we may want to do some splicing on underlying array.
+				// if (event.from === event.to) {
+				// 	// let spliceIndex = (event.newIndex > event.oldIndex) ? event.newIndex - 1 : event.newIndex;
+				// } else {
+				// 	console.log('Not supported yet?');
+				// }
 			},
 			onRemove: (event) => {
 				console.log('onRemove', event);
+				if (event.newIndex === event.to.children.length) {
+					event.to.append(event.item);
+				} else {
+					event.to.insertBefore(event.item, event.to.children[event.newIndex]);
+				}
 			},
 		});
 	}

@@ -410,6 +410,25 @@
       height: height
     };
   }
+
+  function getTopRect(el) {
+    let r = getRect(el);
+    console.log('getTopRect', el, r);
+    if (!r) return;
+    r.bottom = r.top + 1;
+    r.height = 1;
+    return r;
+  }
+
+  function getBottomRect(el) {
+    let r = getRect(el);
+    console.log('getBottomRect', el, r);
+    if (!r) return;
+    r.top = r.bottom - 1;
+    r.height = 1;
+    return r;
+  }
+
   /**
    * Checks if a side of an element is scrolled past a side of its parents
    * @param  {HTMLElement}  el           The element who's side being scrolled out of view is in question
@@ -506,6 +525,25 @@
 
 
     while (el = el.previousElementSibling) {
+      if (el.nodeName.toUpperCase() !== 'TEMPLATE' && el !== Sortable.clone && (!selector || matches(el, selector))) {
+        index++;
+      }
+    }
+
+    return index;
+  }
+  function lastIndexOfContainer(parent, selector) {
+    var index = 0;
+
+    if (!parent) {
+      return -1;
+    }
+    /* jshint boss:true */
+
+    if (parent.childElementCount === 0) {
+      return 0;
+    }
+    for (let el = parent.lastElementChild; el = el.previousElementSibling; el) {
       if (el.nodeName.toUpperCase() !== 'TEMPLATE' && el !== Sortable.clone && (!selector || matches(el, selector))) {
         index++;
       }
@@ -1020,6 +1058,7 @@
       ghostEl,
       rootEl,
       nextEl,
+      dragNextEl,
       lastDownEl,
       cloneEl,
       cloneHidden,
@@ -1453,6 +1492,9 @@
         dragEl = target;
         parentEl = dragEl.parentNode;
         nextEl = dragEl.nextSibling;
+        dragNextEl = dragEl.nextElementSibling;  // Probably should check for a draggable element? Not sure about that.
+        newIndex = index(dragEl);
+        newDraggableIndex = index(dragEl, options.draggable);
         lastDownEl = target;
         activeGroup = options.group;
         Sortable.dragged = dragEl;
@@ -1960,8 +2002,8 @@
 
 
       function changed() {
-        newIndex = index(dragEl);
-        newDraggableIndex = index(dragEl, options.draggable);
+        newIndex = dragNextEl ? index(dragNextEl) : lastIndexOfContainer(parentEl);
+        newDraggableIndex = dragNextEl ? index(dragNextEl, options.draggable) : lastIndexOfContainer(parentEl, options.draggable);
 
         _dispatchEvent({
           sortable: _this,
@@ -1990,7 +2032,7 @@
       if (activeSortable && !options.disabled && (isOwner ? canSort || (revert = parentEl !== rootEl) // Reverting item into the original list
       : putSortable === this || (this.lastPutMode = activeGroup.checkPull(this, activeSortable, dragEl, evt)) && group.checkPut(this, activeSortable, dragEl, evt))) {
         vertical = this._getDirection(evt, target) === 'vertical';
-        dragRect = getRect(dragEl);
+        dragRect = dragNextEl ? getTopRect(dragNextEl) : getBottomRect(parentEl);
         dragOverEvent('dragOverValid');
         if (Sortable.eventCanceled) return completedFired;
 
@@ -2003,6 +2045,7 @@
 
           dragOverEvent('revert');
 
+          // Not necessary, because it never moved.
           // if (!Sortable.eventCanceled) {
           //   if (nextEl) {
           //     rootEl.insertBefore(dragEl, nextEl);
@@ -2034,8 +2077,9 @@
 
           if (_onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, !!target) !== false) {
             capture();
-            el.appendChild(dragEl);
+            // el.appendChild(dragEl);
             parentEl = el; // actualization
+            dragNextEl - null;
 
             changed();
             return completed(true);
@@ -2054,6 +2098,7 @@
           if (_onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, false) !== false) {
             capture();
             // el.insertBefore(dragEl, firstChild);
+            dragNextEl = firstChild;
             parentEl = el; // actualization
 
             changed();
@@ -2080,10 +2125,13 @@
 
           if (direction !== 0) {
             // Check if target is beside dragEl in respective direction (ignoring hidden elements)
-            var dragIndex = index(dragEl);
+            // Not sure if newIndex is actually updated here, but I think it should.
+            var dragIndex = newIndex - 0.5;
+            var multiplier = 0.5;
 
             do {
-              dragIndex -= direction;
+              dragIndex -= direction * multiplier;
+              multiplier = 1; // Use 0.5 only once, to account for 0.5 subtracted above.
               sibling = parentEl.children[dragIndex];
             } while (sibling && (css(sibling, 'display') === 'none' || sibling === ghostEl));
           } // If dragEl is already beside target: Do not insert
@@ -2115,13 +2163,14 @@
             // } else {
             //   target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
             // } // Undo chrome's scroll adjustment (has no effect on other browsers)
+            dragNextEl = (after && !nextSibling) ? null : nextSibling;
 
 
             if (scrolledPastTop) {
               scrollBy(scrolledPastTop, 0, scrollBefore - scrolledPastTop.scrollTop);
             }
 
-            parentEl = dragEl.parentNode; // actualization
+            parentEl = (after && !nextSibling) ? el : target.parentNode; // actualization
             // must be done before animation
 
             if (targetBeforeFirstSwap !== undefined && !isCircumstantialInvert) {
@@ -2163,15 +2212,17 @@
       var el = this.el,
           options = this.options; // Get the index of the dragged element within its parent
 
-      newIndex = index(dragEl);
-      newDraggableIndex = index(dragEl, options.draggable);
-      pluginEvent('drop', this, {
-        evt: evt
-      });
-      parentEl = dragEl && dragEl.parentNode; // Get again after plugin event
+      // Why wouldn't it be updated? I'll assume it is.
+      // newIndex = index(dragEl);
+      // newDraggableIndex = index(dragEl, options.draggable);
+      // KILL THE PLUGIN SUPPORT (FOR NOW?).
+      // pluginEvent('drop', this, {
+      //   evt: evt
+      // });
+      // parentEl = dragEl && dragEl.parentNode; // Get again after plugin event
 
-      newIndex = index(dragEl);
-      newDraggableIndex = index(dragEl, options.draggable);
+      // newIndex = index(dragEl);
+      // newDraggableIndex = index(dragEl, options.draggable);
 
       if (Sortable.eventCanceled) {
         this._nulling();
@@ -2325,7 +2376,7 @@
     },
     _nulling: function _nulling() {
       pluginEvent('nulling', this);
-      rootEl = dragEl = parentEl = ghostEl = nextEl = cloneEl = lastDownEl = cloneHidden = tapEvt = touchEvt = moved = newIndex = newDraggableIndex = oldIndex = oldDraggableIndex = lastTarget = lastDirection = putSortable = activeGroup = Sortable.dragged = Sortable.ghost = Sortable.clone = Sortable.active = null;
+      rootEl = dragEl = parentEl = ghostEl = nextEl = dragNextEl = cloneEl = lastDownEl = cloneHidden = tapEvt = touchEvt = moved = newIndex = newDraggableIndex = oldIndex = oldDraggableIndex = lastTarget = lastDirection = putSortable = activeGroup = Sortable.dragged = Sortable.ghost = Sortable.clone = Sortable.active = null;
       savedInputChecked.forEach(function (el) {
         el.checked = true;
       });
@@ -2635,7 +2686,7 @@
 
 
   function _getInsertDirection(target) {
-    if (index(dragEl) < index(target)) {
+    if (newIndex - 0.5 < index(target)) {
       return 1;
     } else {
       return -1;
