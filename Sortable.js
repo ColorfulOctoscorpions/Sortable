@@ -2079,7 +2079,7 @@
             capture();
             // el.appendChild(dragEl);
             parentEl = el; // actualization
-            dragNextEl - null;
+            dragNextEl = null;
 
             changed();
             return completed(true);

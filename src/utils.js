@@ -254,6 +254,24 @@ function getRect(el, relativeToContainingBlock, relativeToNonStaticParent, undoS
 	};
 }
 
+function getTopRect(el) {
+	let r = getRect(el);
+	console.log('getTopRect', el, r);
+	if (!r) return;
+	r.top -= r.height/2;
+	r.bottom -= r.height/2;
+	return r;
+}
+
+function getBottomRect(el) {
+	let r = getRect(el);
+	console.log('getBottomRect', el, r);
+	if (!r) return;
+	r.top += r.height/2;
+	r.bottom += r.height/2;
+	return r;
+}
+
 /**
  * Checks if a side of an element is scrolled past a side of its parents
  * @param  {HTMLElement}  el           The element who's side being scrolled out of view is in question
@@ -360,6 +378,26 @@ function index(el, selector) {
 	/* jshint boss:true */
 	while (el = el.previousElementSibling) {
 		if ((el.nodeName.toUpperCase() !== 'TEMPLATE') && el !== Sortable.clone && (!selector || matches(el, selector))) {
+			index++;
+		}
+	}
+
+	return index;
+}
+
+function lastIndexOfContainer(parent, selector) {
+	var index = 0;
+
+	if (!parent) {
+		return -1;
+	}
+	/* jshint boss:true */
+
+	if (parent.childElementCount === 0) {
+		return 0;
+	}
+	for (let el = parent.lastElementChild; el = el.previousElementSibling; el) {
+		if (el.nodeName.toUpperCase() !== 'TEMPLATE' && el !== Sortable.clone && (!selector || matches(el, selector))) {
 			index++;
 		}
 	}
@@ -537,10 +575,13 @@ export {
 	find,
 	getWindowScrollingElement,
 	getRect,
+	getBottomRect,
+	getTopRect,
 	isScrolledPast,
 	getChild,
 	lastChild,
 	index,
+	lastIndexOfContainer,
 	getRelativeScrollOffset,
 	indexOfObject,
 	getParentAutoScrollElement,

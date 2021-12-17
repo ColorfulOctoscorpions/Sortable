@@ -25,10 +25,13 @@ import {
 	find,
 	getWindowScrollingElement,
 	getRect,
+	getBottomRect,
+	getTopRect,
 	isScrolledPast,
 	getChild,
 	lastChild,
 	index,
+	lastIndexOfContainer,
 	getRelativeScrollOffset,
 	extend,
 	throttle,
@@ -97,6 +100,7 @@ let dragEl,
 	ghostEl,
 	rootEl,
 	nextEl,
+	dragNextEl,
 	lastDownEl,
 
 	cloneEl,
@@ -566,6 +570,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			dragEl = target;
 			parentEl = dragEl.parentNode;
 			nextEl = dragEl.nextSibling;
+			dragNextEl = dragEl.nextElementSibling;  // Probably should check for a draggable element? Not sure about that.
+			newIndex = index(dragEl);
+			newDraggableIndex = index(dragEl, options.draggable);
 			lastDownEl = target;
 			activeGroup = options.group;
 
@@ -940,9 +947,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			pluginEvent('clone', _this);
 			if (Sortable.eventCanceled) return;
 
-			if (!_this.options.removeCloneOnHide) {
-				rootEl.insertBefore(cloneEl, dragEl);
-			}
+			// if (!_this.options.removeCloneOnHide) {
+			// 	rootEl.insertBefore(cloneEl, dragEl);
+			// }
 			_this._hideClone();
 
 			_dispatchEvent({
@@ -1096,8 +1103,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 		// Call when dragEl has been inserted
 		function changed() {
-			newIndex = index(dragEl);
-			newDraggableIndex = index(dragEl, options.draggable);
+			newIndex = dragNextEl ? index(dragNextEl) : lastIndexOfContainer(parentEl);
+			newDraggableIndex = dragNextEl ? index(dragNextEl, options.draggable) : lastIndexOfContainer(parentEl, options.draggable);
+
 			_dispatchEvent({
 				sortable: _this,
 				name: 'change',
@@ -1143,7 +1151,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		) {
 			vertical = this._getDirection(evt, target) === 'vertical';
 
-			dragRect = getRect(dragEl);
+			dragRect = dragNextEl ? getTopRect(dragNextEl) : getBottomRect(parentEl);
 
 			dragOverEvent('dragOverValid');
 			if (Sortable.eventCanceled) return completedFired;
@@ -1156,13 +1164,13 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				dragOverEvent('revert');
 
-				if (!Sortable.eventCanceled) {
-					if (nextEl) {
-						rootEl.insertBefore(dragEl, nextEl);
-					} else {
-						rootEl.appendChild(dragEl);
-					}
-				}
+				// if (!Sortable.eventCanceled) {
+				// 	if (nextEl) {
+				// 		rootEl.insertBefore(dragEl, nextEl);
+				// 	} else {
+				// 		rootEl.appendChild(dragEl);
+				// 	}
+				// }
 
 				return completed(true);
 			}
@@ -1188,11 +1196,14 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				if (onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, !!target) !== false) {
 					capture();
-					if (elLastChild && elLastChild.nextSibling) { // the last draggable element is not the last node
-						el.insertBefore(dragEl, elLastChild.nextSibling);
+					// I use nextElementSibling instead if nextSibling because dragNextEl must be an element now.
+					if (elLastChild && elLastChild.nextElementSibling) { // the last draggable element is not the last node
+						// el.insertBefore(dragEl, elLastChild.nextSibling);
+						dragNextEl = elLastChild.nextElementSibling;
 					}
 					else {
-						el.appendChild(dragEl);
+						// el.appendChild(dragEl);
+						dragNextEl = null;
 					}
 					parentEl = el; // actualization
 
@@ -1211,7 +1222,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				if (onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, false) !== false) {
 					capture();
-					el.insertBefore(dragEl, firstChild);
+					//el.insertBefore(dragEl, firstChild);
+					dragNextEl = firstChild;
 					parentEl = el; // actualization
 
 					changed();
@@ -1242,19 +1254,25 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 					isCircumstantialInvert,
 					lastTarget === target
 				);
+				console.log('_getSwapDirection: ', direction);
 
 				let sibling;
 
 				if (direction !== 0) {
 					// Check if target is beside dragEl in respective direction (ignoring hidden elements)
-					let dragIndex = index(dragEl);
+
+					// Not sure if newIndex is actually updated here, but I think it should.
+					let dragIndex = newIndex - 0.5;
+					let multiplier = 0.5;
 
 					do {
-						dragIndex -= direction;
+						dragIndex -= direction * multiplier;
+						multiplier = 1; // Use 0.5 only once, to account for 0.5 subtracted above.
 						sibling = parentEl.children[dragIndex];
 					} while (sibling && (css(sibling, 'display') === 'none' || sibling === ghostEl));
 				}
 				// If dragEl is already beside target: Do not insert
+				// I have commented out sibling === target previously. Not sure if that was maybe right.
 				if (
 					direction === 0 ||
 					sibling === target
@@ -1266,10 +1284,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				lastDirection = direction;
 
-				let nextSibling = target.nextElementSibling,
-					after = false;
-
-				after = direction === 1;
+				let after = direction === 1;
+				let nextSibling = after ? target.nextElementSibling : target;
 
 				let moveVector = onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, after);
 
@@ -1283,18 +1299,19 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 					capture();
 
-					if (after && !nextSibling) {
-						el.appendChild(dragEl);
-					} else {
-						target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
-					}
+					// if (after && !nextSibling) {
+					// 	el.appendChild(dragEl);
+					// } else {
+					// 	target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
+					// }
+					dragNextEl = nextSibling || null;
 
 					// Undo chrome's scroll adjustment (has no effect on other browsers)
 					if (scrolledPastTop) {
 						scrollBy(scrolledPastTop, 0, scrollBefore - scrolledPastTop.scrollTop);
 					}
 
-					parentEl = dragEl.parentNode; // actualization
+					parentEl = target.parentNode; // actualization
 
 					// must be done before animation
 					if (targetBeforeFirstSwap !== undefined && !isCircumstantialInvert) {
@@ -1339,19 +1356,21 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		let el = this.el,
 			options = this.options;
 
-		// Get the index of the dragged element within its parent
-		newIndex = index(dragEl);
-		newDraggableIndex = index(dragEl, options.draggable);
+		// Why wouldn't newIndex be updated? I'll assume it is.
+		// // Get the index of the dragged element within its parent
+		// newIndex = index(dragEl);
+		// newDraggableIndex = index(dragEl, options.draggable);
 
-		pluginEvent('drop', this, {
-			evt
-		});
+		// // KILL THE PLUGIN SUPPORT.
+		// pluginEvent('drop', this, {
+		// 	evt
+		// });
 
-		parentEl = dragEl && dragEl.parentNode;
+		// parentEl = dragEl && dragEl.parentNode;
 
-		// Get again after plugin event
-		newIndex = index(dragEl);
-		newDraggableIndex = index(dragEl, options.draggable);
+		// // Get again after plugin event
+		// newIndex = index(dragEl);
+		// newDraggableIndex = index(dragEl, options.draggable);
 
 		if (Sortable.eventCanceled) {
 			this._nulling();
@@ -1513,6 +1532,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		parentEl =
 		ghostEl =
 		nextEl =
+		dragNextEl =
 		cloneEl =
 		lastDownEl =
 		cloneHidden =
@@ -1718,14 +1738,14 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			pluginEvent('showClone', this);
 			if (Sortable.eventCanceled) return;
 
-			// show clone at dragEl or original position
-			if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
-				rootEl.insertBefore(cloneEl, dragEl);
-			} else if (nextEl) {
-				rootEl.insertBefore(cloneEl, nextEl);
-			} else {
-				rootEl.appendChild(cloneEl);
-			}
+			// // show clone at dragEl or original position
+			// if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
+			// 	rootEl.insertBefore(cloneEl, dragEl);
+			// } else if (nextEl) {
+			// 	rootEl.insertBefore(cloneEl, nextEl);
+			// } else {
+			// 	rootEl.appendChild(cloneEl);
+			// }
 
 			if (this.options.group.revertClone) {
 				this.animate(dragEl, cloneEl);
@@ -1883,7 +1903,7 @@ function _getSwapDirection(evt, target, targetRect, vertical, swapThreshold, inv
  * @return {Number}                   Direction dragEl must be swapped
  */
 function _getInsertDirection(target) {
-	if (index(dragEl) < index(target)) {
+	if (newIndex - 0.5 < index(target)) {
 		return 1;
 	} else {
 		return -1;
