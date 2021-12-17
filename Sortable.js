@@ -415,8 +415,8 @@
     let r = getRect(el);
     console.log('getTopRect', el, r);
     if (!r) return;
-    r.bottom = r.top + 1;
-    r.height = 1;
+    r.top -= r.height/2;
+    r.bottom -= r.height/2;
     return r;
   }
 
@@ -424,8 +424,8 @@
     let r = getRect(el);
     console.log('getBottomRect', el, r);
     if (!r) return;
-    r.top = r.bottom - 1;
-    r.height = 1;
+    r.top += r.height/2;
+    r.bottom += r.height/2;
     return r;
   }
 
@@ -2121,6 +2121,7 @@
           }
 
           direction = _getSwapDirection(evt, target, targetRect, vertical, differentRowCol ? 1 : options.swapThreshold, options.invertedSwapThreshold == null ? options.swapThreshold : options.invertedSwapThreshold, isCircumstantialInvert, lastTarget === target);
+          console.log('_getSwapDirection: ', direction);
           var sibling;
 
           if (direction !== 0) {
@@ -2137,15 +2138,15 @@
           } // If dragEl is already beside target: Do not insert
 
 
-          if (direction === 0 || sibling === target) {
+          // if (direction === 0 || sibling === target) {
+          if (direction === 0) {
             return completed(false);
           }
 
           lastTarget = target;
           lastDirection = direction;
-          var nextSibling = target.nextElementSibling,
-              after = false;
-          after = direction === 1;
+          var after = direction === 1;
+          var nextSibling = after ? target.nextElementSibling : target;
 
           var moveVector = _onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, after);
 
@@ -2163,14 +2164,14 @@
             // } else {
             //   target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
             // } // Undo chrome's scroll adjustment (has no effect on other browsers)
-            dragNextEl = (after && !nextSibling) ? null : nextSibling;
+            dragNextEl = nextSibling || null;
 
 
             if (scrolledPastTop) {
               scrollBy(scrolledPastTop, 0, scrollBefore - scrolledPastTop.scrollTop);
             }
 
-            parentEl = (after && !nextSibling) ? el : target.parentNode; // actualization
+            parentEl = target.parentNode; // actualization
             // must be done before animation
 
             if (targetBeforeFirstSwap !== undefined && !isCircumstantialInvert) {
