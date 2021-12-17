@@ -26,8 +26,41 @@
 <script src="../Sortable.js"></script>
 
 <script type="text/javascript">
-	new Sortable(document.getElementById('list1'), { group: 'shared' });
-	new Sortable(document.getElementById('list2'), { });
+	for (let elId of ['list1', 'list2']) {
+		new Sortable(document.getElementById(elId), {
+			group: 'shared',
+			direction: 'vertical',
+			animation: 150,
+			fallbackTolerance: 5,
+			delay: 220,
+			delayOnTouchOnly: true,
+			forceFallback: true,
+			// fallbackOnBody: true,
+
+			onMove: (event, originalEvent) => {
+				console.log('onMove', event);
+				return true; // Use default.
+			},
+			onClone: (event) => {
+				console.log('onClone', event);
+			},
+			onChoose: (event) => {
+				console.log('onChoose', event);
+			},
+			onStart: (event) => {
+				console.log('onStart', event);
+			},
+			onUnchoose: (event) => {
+				console.log('onUnchoose', event);
+			},
+			onUpdate: (event) => {
+				console.log('onUpdate', event);
+			},
+			onRemove: (event) => {
+				console.log('onRemove', event);
+			},
+		});
+	}
 </script>
 
 </body>

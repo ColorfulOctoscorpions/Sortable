@@ -1723,6 +1723,7 @@
     _appendGhost: function _appendGhost() {
       // Bug if using scale(): https://stackoverflow.com/questions/2637058
       // Not being adjusted for
+      console.log('_appendGhost', ghostEl);
       if (!ghostEl) {
         var container = this.options.fallbackOnBody ? document.body : rootEl,
             rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
@@ -1806,9 +1807,9 @@
         pluginEvent('clone', _this);
         if (Sortable.eventCanceled) return;
 
-        if (!_this.options.removeCloneOnHide) {
-          rootEl.insertBefore(cloneEl, dragEl);
-        }
+        // if (!_this.options.removeCloneOnHide) {
+        //   rootEl.insertBefore(cloneEl, dragEl);
+        // }
 
         _this._hideClone();
 
@@ -2002,13 +2003,13 @@
 
           dragOverEvent('revert');
 
-          if (!Sortable.eventCanceled) {
-            if (nextEl) {
-              rootEl.insertBefore(dragEl, nextEl);
-            } else {
-              rootEl.appendChild(dragEl);
-            }
-          }
+          // if (!Sortable.eventCanceled) {
+          //   if (nextEl) {
+          //     rootEl.insertBefore(dragEl, nextEl);
+          //   } else {
+          //     rootEl.appendChild(dragEl);
+          //   }
+          // }
 
           return completed(true);
         }
@@ -2052,7 +2053,7 @@
 
           if (_onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, false) !== false) {
             capture();
-            el.insertBefore(dragEl, firstChild);
+            // el.insertBefore(dragEl, firstChild);
             parentEl = el; // actualization
 
             changed();
@@ -2109,11 +2110,11 @@
             setTimeout(_unsilent, 30);
             capture();
 
-            if (after && !nextSibling) {
-              el.appendChild(dragEl);
-            } else {
-              target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
-            } // Undo chrome's scroll adjustment (has no effect on other browsers)
+            // if (after && !nextSibling) {
+            //   el.appendChild(dragEl);
+            // } else {
+            //   target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
+            // } // Undo chrome's scroll adjustment (has no effect on other browsers)
 
 
             if (scrolledPastTop) {
@@ -2499,13 +2500,13 @@
         pluginEvent('showClone', this);
         if (Sortable.eventCanceled) return; // show clone at dragEl or original position
 
-        if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
-          rootEl.insertBefore(cloneEl, dragEl);
-        } else if (nextEl) {
-          rootEl.insertBefore(cloneEl, nextEl);
-        } else {
-          rootEl.appendChild(cloneEl);
-        }
+        // if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
+        //   rootEl.insertBefore(cloneEl, dragEl);
+        // } else if (nextEl) {
+        //   rootEl.insertBefore(cloneEl, nextEl);
+        // } else {
+        //   rootEl.appendChild(cloneEl);
+        // }
 
         if (this.options.group.revertClone) {
           this.animate(dragEl, cloneEl);
@@ -3025,11 +3026,11 @@
 
       var nextSibling = getChild(this.sortable.el, this.startIndex, this.options);
 
-      if (nextSibling) {
-        this.sortable.el.insertBefore(dragEl, nextSibling);
-      } else {
-        this.sortable.el.appendChild(dragEl);
-      }
+      // if (nextSibling) {
+      //   this.sortable.el.insertBefore(dragEl, nextSibling);
+      // } else {
+      //   this.sortable.el.appendChild(dragEl);
+      // }
 
       this.sortable.animateAll();
 
@@ -3151,8 +3152,8 @@
       i2++;
     }
 
-    p1.insertBefore(n2, p1.children[i1]);
-    p2.insertBefore(n1, p2.children[i2]);
+    // p1.insertBefore(n2, p1.children[i1]);
+    // p2.insertBefore(n1, p2.children[i2]);
   }
 
   var multiDragElements = [],
@@ -3563,11 +3564,11 @@
 
               removeMultiDragElements();
               multiDragElements.forEach(function (multiDragElement) {
-                if (children[multiDragIndex]) {
-                  parentEl.insertBefore(multiDragElement, children[multiDragIndex]);
-                } else {
-                  parentEl.appendChild(multiDragElement);
-                }
+                // if (children[multiDragIndex]) {
+                //   parentEl.insertBefore(multiDragElement, children[multiDragIndex]);
+                // } else {
+                //   parentEl.appendChild(multiDragElement);
+                // }
 
                 multiDragIndex++;
               }); // If initial folding is done, the elements may have changed position because they are now
@@ -3739,11 +3740,11 @@
     multiDragElements.forEach(function (multiDragElement, i) {
       var target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 
-      if (target) {
-        rootEl.insertBefore(multiDragElement, target);
-      } else {
-        rootEl.appendChild(multiDragElement);
-      }
+      // if (target) {
+      //   rootEl.insertBefore(multiDragElement, target);
+      // } else {
+      //   rootEl.appendChild(multiDragElement);
+      // }
     });
   }
   /**
@@ -3757,11 +3758,11 @@
     multiDragClones.forEach(function (clone, i) {
       var target = rootEl.children[clone.sortableIndex + (elementsInserted ? Number(i) : 0)];
 
-      if (target) {
-        rootEl.insertBefore(clone, target);
-      } else {
-        rootEl.appendChild(clone);
-      }
+      // if (target) {
+      //   rootEl.insertBefore(clone, target);
+      // } else {
+      //   rootEl.appendChild(clone);
+      // }
     });
   }
 
