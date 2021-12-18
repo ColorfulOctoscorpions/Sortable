@@ -537,7 +537,7 @@
         // when the debounce ends.
         lastThis = this;
         lastArgs = args; // console.log(currentTime, 'debounced call updated');
-      } else if (currentTime >= lastCallTime + ms) {
+      } else if (currentTime >= lastCallTime + f.debounceTime) {
         // We are past the last debounce period, call the function immediately.
         // This will start a new debounce period.
         // console.log(currentTime, 'debounced function direct call, ', currentTime - lastCallTime, ' ms after last call');
@@ -564,9 +564,11 @@
 
           lastThis = lastArgs = null;
           lastCallTime = Date.now(); // This is in the timeout, so currentTime is outdated.
-        }, lastCallTime + ms - currentTime);
+        }, lastCallTime + f.debounceTime - currentTime);
       }
     };
+
+    f.debounceTime = ms;
 
     f.cancel = () => {
       if (debounceTimeout !== null) {
@@ -2757,6 +2759,10 @@
 
   Sortable.create = function (el, options) {
     return new Sortable(el, options);
+  };
+
+  Sortable.setOnDragOverDebounceMs = function (ms) {
+    Sortable.prototype._onDragOver.debounceTime = ms;
   }; // Export
 
 

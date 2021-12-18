@@ -2043,6 +2043,10 @@ Sortable.create = function (el, options) {
 	return new Sortable(el, options);
 };
 
+Sortable.setOnDragOverDebounceMs = function (ms) {
+	Sortable.prototype._onDragOver.debounceTime = ms;
+};
+
 
 // Export
 Sortable.version = version;
