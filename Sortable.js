@@ -499,27 +499,24 @@
   }
 
   function throttle(callback, ms) {
-    let throttleTimeout = null;
+    let lastCallTime = 0;
 
     const f = function (...args) {
-      if (!throttleTimeout) {
-        if (arguments.length === 1) {
+      const currentTime = Date.now();
+
+      if (currentTime >= lastCallTime + ms) {
+        if (args.length === 1) {
           callback.call(this, args[0]);
         } else {
           callback.apply(this, args);
         }
 
-        throttleTimeout = setTimeout(function () {
-          throttleTimeout = null;
-        }, ms);
+        lastCallTime = currentTime;
       }
     };
 
     f.cancel = () => {
-      if (throttleTimeout !== null) {
-        clearTimeout(throttleTimeout);
-        throttleTimeout = null;
-      }
+      lastCallTime = 0;
     };
 
     return f;
