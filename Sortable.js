@@ -2005,7 +2005,6 @@
           }
 
           direction = _getSwapDirection(evt, target, targetRect, vertical, differentRowCol ? 1 : options.swapThreshold, options.invertedSwapThreshold == null ? options.swapThreshold : options.invertedSwapThreshold, isCircumstantialInvert, lastTarget === target);
-          console.log('_getSwapDirection: ', direction);
           let sibling;
 
           if (direction !== 0) {

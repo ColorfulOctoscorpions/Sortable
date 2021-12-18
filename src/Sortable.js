@@ -1255,7 +1255,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 					isCircumstantialInvert,
 					lastTarget === target
 				);
-				console.log('_getSwapDirection: ', direction);
 
 				let sibling;
 
