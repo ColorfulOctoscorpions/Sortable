@@ -1378,10 +1378,11 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// newIndex = index(dragEl);
 		// newDraggableIndex = index(dragEl, options.draggable);
 
-		// // KILL THE PLUGIN SUPPORT.
-		// pluginEvent('drop', this, {
-		// 	evt
-		// });
+		// We need this call for autoscroll to disable, but we don't keep
+		// the original behavior of looking at what it does with dragEl.
+		pluginEvent('drop', this, {
+			evt
+		});
 
 		// parentEl = dragEl && dragEl.parentNode;
 
