@@ -2047,7 +2047,7 @@
             // 	target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
             // }
 
-            dragNextEl = nextSibling || null; // Undo chrome's scroll adjustment (has no effect on other browsers)
+            dragNextEl = after ? nextSibling || null : target; // Undo chrome's scroll adjustment (has no effect on other browsers)
 
             if (scrolledPastTop) {
               scrollBy(scrolledPastTop, 0, scrollBefore - scrolledPastTop.scrollTop);

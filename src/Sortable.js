@@ -1305,7 +1305,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 					// } else {
 					// 	target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
 					// }
-					dragNextEl = nextSibling || null;
+					dragNextEl = after ? (nextSibling || null) : target;
 
 					// Undo chrome's scroll adjustment (has no effect on other browsers)
 					if (scrolledPastTop) {
