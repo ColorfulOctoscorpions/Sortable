@@ -1190,7 +1190,8 @@
         y: 0
       },
       supportPointer: Sortable.supportPointer !== false && 'PointerEvent' in window && !Safari,
-      emptyInsertThreshold: 5
+      emptyInsertThreshold: 5,
+      emulateDragOverInterval: 50
     };
     PluginManager.initializePlugins(this, el, defaults); // Set default options
 
@@ -1739,7 +1740,7 @@
 
       if (fallback) {
         ignoreNextClick = true;
-        _this._loopId = setInterval(_this._emulateDragOver, 50);
+        _this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverInterval);
       } else {
         // Undo what was set in _prepareDragStart before drag started
         off(document, 'mouseup', _this._onDrop);
