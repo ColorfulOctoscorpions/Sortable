@@ -300,6 +300,23 @@ let dragEl,
 		}
 	};
 
+	_getChildIncludingDragged = function(el, childNum, options) {
+		// Note: I always call getChild with includeDragEl=false, so I don't need
+		// to check if the actual element is in el or not. We only check the logical
+		// position.
+		if (el === parentEl && childNum >= newIndex) {
+			if (childNum == newIndex) {
+				// That is a bit shady, as this element is in a completely different place.
+				// However, I expect callers to treat it as a special case.
+				return dragEl;
+			} else {
+				getChild(el, childNum - 1, options);
+			}
+		} else {
+			getChild(el, childNum, options);
+		}
+	};
+
 
 // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 if (documentExists) {
@@ -1214,7 +1231,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			}
 			else if (elLastChild && _ghostIsFirst(evt, vertical, this)) {
 				// Insert to start of list
-				let firstChild = getChild(el, 0, options, true);
+				let firstChild = _getChildIncludingDragged(el, 0, options);
 				if (firstChild === dragEl) {
 					return completed(false);
 				}
@@ -1808,7 +1825,7 @@ function _unsilent() {
 }
 
 function _ghostIsFirst(evt, vertical, sortable) {
-	let rect = getRect(getChild(sortable.el, 0, sortable.options, true));
+	let rect = getRect(getChild(sortable.el, 0, sortable.options/*, true*/));
 	const spacer = 10;
 
 	return vertical ?
