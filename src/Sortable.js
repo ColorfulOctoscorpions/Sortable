@@ -37,7 +37,8 @@ import {
 	throttle,
 	scrollBy,
 	clone,
-	expando
+	expando,
+	debounce
 } from './utils.js';
 
 
@@ -1014,7 +1015,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 
 	// Returns true - if no further action is needed (either inserted or another condition)
-	_onDragOver: function (/**Event*/evt) {
+	_onDragOver: debounce(function (/**Event*/evt) {
 		let el = this.el,
 			target = evt.target,
 			dragRect,
@@ -1346,7 +1347,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 
 		return false;
-	},
+	}, 30),
 
 	_ignoreWhileAnimating: null,
 
@@ -1544,6 +1545,11 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 	_nulling: function() {
 		pluginEvent('nulling', this);
+
+		// this._onDragOver is bound, and binding doesn't carry over the .cancel
+		// property, so we need to call it directly on the prototype.
+		// Node: There is only one debounce, shared by all Sortable instances.
+		Sortable.prototype._onDragOver.cancel();
 
 		rootEl =
 		dragEl =
@@ -1988,6 +1994,7 @@ Sortable.utils = {
 	},
 	extend: extend,
 	throttle: throttle,
+	debounce: debounce,
 	closest: closest,
 	toggleClass: toggleClass,
 	clone: clone,

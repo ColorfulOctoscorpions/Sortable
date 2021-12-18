@@ -498,30 +498,79 @@
     return Math.round(rect1.top) === Math.round(rect2.top) && Math.round(rect1.left) === Math.round(rect2.left) && Math.round(rect1.height) === Math.round(rect2.height) && Math.round(rect1.width) === Math.round(rect2.width);
   }
 
-  let _throttleTimeout;
-
   function throttle(callback, ms) {
-    return function () {
-      if (!_throttleTimeout) {
-        let args = arguments,
-            _this = this;
+    let throttleTimeout = null;
 
-        if (args.length === 1) {
-          callback.call(_this, args[0]);
+    const f = function (...args) {
+      if (!throttleTimeout) {
+        if (arguments.length === 1) {
+          callback.call(this, args[0]);
         } else {
-          callback.apply(_this, args);
+          callback.apply(this, args);
         }
 
-        _throttleTimeout = setTimeout(function () {
-          _throttleTimeout = void 0;
+        throttleTimeout = setTimeout(function () {
+          throttleTimeout = null;
         }, ms);
       }
     };
+
+    f.cancel = () => {
+      if (throttleTimeout !== null) {
+        clearTimeout(throttleTimeout);
+        throttleTimeout = null;
+      }
+    };
+
+    return f;
   }
 
-  function cancelThrottle() {
-    clearTimeout(_throttleTimeout);
-    _throttleTimeout = void 0;
+  function debounce(callback, ms) {
+    let debounceTimeout = null;
+    let lastThis = null;
+    let lastArgs = null;
+
+    const f = function () {
+      if (debounceTimeout) {
+        // We are in a debounce period. Update the call arguments for the
+        // call that will happen when the debounce ends.
+        lastThis = this;
+        lastArgs = arguments;
+      } else {
+        // We are past the last debounce period, call the function immediately,
+        // then start a new debounce period.
+        if (arguments.length === 1) {
+          callback.call(this, arguments[0]);
+        } else {
+          callback.apply(this, arguments);
+        }
+
+        debounceTimeout = setTimeout(function () {
+          debounceTimeout = null;
+
+          if (lastArgs) {
+            if (lastArgs.length === 1) {
+              callback.call(lastThis, lastArgs[0]);
+            } else {
+              callback.apply(lastThis, lastArgs);
+            }
+
+            lastThis = lastArgs = null;
+          }
+        }, ms);
+      }
+    };
+
+    f.cancel = () => {
+      if (debounceTimeout !== null) {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = null;
+      }
+
+      lastThis = lastArgs = null;
+    };
+
+    return f;
   }
 
   function scrollBy(el, x, y) {
@@ -1781,7 +1830,7 @@
       }
     },
     // Returns true - if no further action is needed (either inserted or another condition)
-    _onDragOver: function (
+    _onDragOver: debounce(function (
     /**Event*/
     evt) {
       let el = this.el,
@@ -2084,7 +2133,7 @@
       }
 
       return false;
-    },
+    }, 30),
     _ignoreWhileAnimating: null,
     _offMoveEvents: function () {
       off(document, 'mousemove', this._onTouchMove);
@@ -2271,7 +2320,12 @@
       this._nulling();
     },
     _nulling: function () {
-      pluginEvent('nulling', this);
+      pluginEvent('nulling', this); // this._onDragOver is bound, and binding doesn't carry over the .cancel
+      // property, so we need to call it directly on the prototype.
+      // Node: There is only one debounce, shared by all Sortable instances.
+
+      Sortable.prototype._onDragOver.cancel();
+
       rootEl = dragEl = parentEl = ghostEl = nextEl = dragNextEl = cloneEl = lastDownEl = cloneHidden = tapEvt = touchEvt = moved = newIndex = newDraggableIndex = oldIndex = oldDraggableIndex = lastTarget = lastDirection = putSortable = activeGroup = Sortable.dragged = Sortable.ghost = Sortable.clone = Sortable.active = null;
       savedInputChecked.forEach(function (el) {
         el.checked = true;
@@ -2648,6 +2702,7 @@
     },
     extend: extend,
     throttle: throttle,
+    debounce: debounce,
     closest: closest,
     toggleClass: toggleClass,
     clone: clone,
@@ -2764,7 +2819,7 @@
 
         clearPointerElemChangedInterval();
         clearAutoScrolls();
-        cancelThrottle();
+        autoScroll.cancel();
       },
 
       nulling() {

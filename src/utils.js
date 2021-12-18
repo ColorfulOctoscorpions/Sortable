@@ -494,15 +494,12 @@ function isRectEqual(rect1, rect2) {
 
 function throttle(callback, ms) {
 	let throttleTimeout = null;
-	const f = function () {
+	const f = function (...args) {
 		if (!throttleTimeout) {
-			let args = arguments,
-				_this = this;
-
-			if (args.length === 1) {
-				callback.call(_this, args[0]);
+			if (arguments.length === 1) {
+				callback.call(this, args[0]);
 			} else {
-				callback.apply(_this, args);
+				callback.apply(this, args);
 			}
 
 			throttleTimeout = setTimeout(function () {
@@ -513,9 +510,51 @@ function throttle(callback, ms) {
 	f.cancel = () => {
 		if (throttleTimeout !== null) {
 			clearTimeout(throttleTimeout);
+			throttleTimeout = null;
 		}
-		throttleTimeout = null;
-	}
+	};
+	return f;
+}
+
+function debounce(callback, ms) {
+	let debounceTimeout = null;
+	let lastThis = null;
+	let lastArgs = null;
+	const f = function () {
+		if (debounceTimeout) {
+			// We are in a debounce period. Update the call arguments for the
+			// call that will happen when the debounce ends.
+			lastThis = this;
+			lastArgs = arguments;
+		} else {
+			// We are past the last debounce period, call the function immediately,
+			// then start a new debounce period.
+			if (arguments.length === 1) {
+				callback.call(this, arguments[0]);
+			} else {
+				callback.apply(this, arguments);
+			}
+
+			debounceTimeout = setTimeout(function() {
+				debounceTimeout = null;
+				if (lastArgs) {
+					if (lastArgs.length === 1) {
+						callback.call(lastThis, lastArgs[0]);
+					} else {
+						callback.apply(lastThis, lastArgs);
+					}
+					lastThis = lastArgs = null;
+				}
+			}, ms);
+		}
+	};
+	f.cancel = () => {
+		if (debounceTimeout !== null) {
+			clearTimeout(debounceTimeout);
+			debounceTimeout = null;
+		}
+		lastThis = lastArgs = null;
+	};
 	return f;
 }
 
@@ -587,6 +626,7 @@ export {
 	extend,
 	isRectEqual,
 	throttle,
+	debounce,
 	scrollBy,
 	clone,
 	setRect,
