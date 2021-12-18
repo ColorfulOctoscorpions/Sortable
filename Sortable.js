@@ -275,7 +275,6 @@
 
   function getTopRect(el) {
     let r = getRect(el);
-    console.log('getTopRect', el, r);
     if (!r) return;
     r.top -= r.height / 2;
     r.bottom -= r.height / 2;
@@ -284,7 +283,6 @@
 
   function getBottomRect(el) {
     let r = getRect(el);
-    console.log('getBottomRect', el, r);
     if (!r) return;
     r.top += r.height / 2;
     r.bottom += r.height / 2;
@@ -1085,9 +1083,8 @@
     if (!supportCssPointerEvents && ghostEl) {
       css(ghostEl, 'display', '');
     }
-  };
-
-  _getChildIncludingDragged = function (el, childNum, options) {
+  },
+        _getChildIncludingDragged = function (el, childNum, options) {
     // Note: I always call getChild with includeDragEl=false, so I don't need
     // to check if the actual element is in el or not. We only check the logical
     // position.
@@ -1097,10 +1094,10 @@
         // However, I expect callers to treat it as a special case.
         return dragEl;
       } else {
-        getChild(el, childNum - 1, options);
+        return getChild(el, childNum - 1, options);
       }
     } else {
-      getChild(el, childNum, options);
+      return getChild(el, childNum, options);
     }
   }; // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 
@@ -1208,7 +1205,7 @@
       },
       supportPointer: Sortable.supportPointer !== false && 'PointerEvent' in window && !Safari,
       emptyInsertThreshold: 5,
-      emulateDragOverInterval: 50
+      emulateDragOverIntervalMs: 50
     };
     PluginManager.initializePlugins(this, el, defaults); // Set default options
 
@@ -1757,7 +1754,7 @@
 
       if (fallback) {
         ignoreNextClick = true;
-        _this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverInterval);
+        _this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverIntervalMs);
       } else {
         // Undo what was set in _prepareDragStart before drag started
         off(document, 'mouseup', _this._onDrop);
@@ -2928,7 +2925,7 @@
             scrollBy(autoScrolls[this.layer].el, scrollOffsetX, scrollOffsetY);
           }.bind({
             layer: layersOut
-          }), this.options.autoScrollIntervalMs);
+          }), options.autoScrollIntervalMs);
         }
       }
 

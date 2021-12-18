@@ -269,7 +269,6 @@ function getRect(el, relativeToContainingBlock, relativeToNonStaticParent, undoS
 
 function getTopRect(el) {
   let r = getRect(el);
-  console.log('getTopRect', el, r);
   if (!r) return;
   r.top -= r.height / 2;
   r.bottom -= r.height / 2;
@@ -278,7 +277,6 @@ function getTopRect(el) {
 
 function getBottomRect(el) {
   let r = getRect(el);
-  console.log('getBottomRect', el, r);
   if (!r) return;
   r.top += r.height / 2;
   r.bottom += r.height / 2;
@@ -1079,9 +1077,8 @@ _detectNearestEmptySortable = function (x, y) {
   if (!supportCssPointerEvents && ghostEl) {
     css(ghostEl, 'display', '');
   }
-};
-
-_getChildIncludingDragged = function (el, childNum, options) {
+},
+      _getChildIncludingDragged = function (el, childNum, options) {
   // Note: I always call getChild with includeDragEl=false, so I don't need
   // to check if the actual element is in el or not. We only check the logical
   // position.
@@ -1091,10 +1088,10 @@ _getChildIncludingDragged = function (el, childNum, options) {
       // However, I expect callers to treat it as a special case.
       return dragEl;
     } else {
-      getChild(el, childNum - 1, options);
+      return getChild(el, childNum - 1, options);
     }
   } else {
-    getChild(el, childNum, options);
+    return getChild(el, childNum, options);
   }
 }; // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 
@@ -1202,7 +1199,7 @@ function Sortable(el, options) {
     },
     supportPointer: Sortable.supportPointer !== false && 'PointerEvent' in window && !Safari,
     emptyInsertThreshold: 5,
-    emulateDragOverInterval: 50
+    emulateDragOverIntervalMs: 50
   };
   PluginManager.initializePlugins(this, el, defaults); // Set default options
 
@@ -1751,7 +1748,7 @@ Sortable.prototype =
 
     if (fallback) {
       ignoreNextClick = true;
-      _this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverInterval);
+      _this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverIntervalMs);
     } else {
       // Undo what was set in _prepareDragStart before drag started
       off(document, 'mouseup', _this._onDrop);
@@ -2922,7 +2919,7 @@ const autoScroll = throttle(function (evt, options, rootEl, isFallback) {
           scrollBy(autoScrolls[this.layer].el, scrollOffsetX, scrollOffsetY);
         }.bind({
           layer: layersOut
-        }), this.options.autoScrollIntervalMs);
+        }), options.autoScrollIntervalMs);
       }
     }
 

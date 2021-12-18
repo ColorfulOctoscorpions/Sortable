@@ -256,7 +256,6 @@ function getRect(el, relativeToContainingBlock, relativeToNonStaticParent, undoS
 
 function getTopRect(el) {
 	let r = getRect(el);
-	console.log('getTopRect', el, r);
 	if (!r) return;
 	r.top -= r.height/2;
 	r.bottom -= r.height/2;
@@ -265,7 +264,6 @@ function getTopRect(el) {
 
 function getBottomRect(el) {
 	let r = getRect(el);
-	console.log('getBottomRect', el, r);
 	if (!r) return;
 	r.top += r.height/2;
 	r.bottom += r.height/2;

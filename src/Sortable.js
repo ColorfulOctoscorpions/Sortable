@@ -298,7 +298,7 @@ let dragEl,
 		if (!supportCssPointerEvents && ghostEl) {
 			css(ghostEl, 'display', '');
 		}
-	};
+	},
 
 	_getChildIncludingDragged = function(el, childNum, options) {
 		// Note: I always call getChild with includeDragEl=false, so I don't need
@@ -310,10 +310,10 @@ let dragEl,
 				// However, I expect callers to treat it as a special case.
 				return dragEl;
 			} else {
-				getChild(el, childNum - 1, options);
+				return getChild(el, childNum - 1, options);
 			}
 		} else {
-			getChild(el, childNum, options);
+			return getChild(el, childNum, options);
 		}
 	};
 
@@ -415,7 +415,7 @@ function Sortable(el, options) {
 		fallbackOffset: {x: 0, y: 0},
 		supportPointer: Sortable.supportPointer !== false && ('PointerEvent' in window) && !Safari,
 		emptyInsertThreshold: 5,
-		emulateDragOverInterval: 50,
+		emulateDragOverIntervalMs: 50,
 	};
 
 	PluginManager.initializePlugins(this, el, defaults);
@@ -982,7 +982,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// Set proper drop events
 		if (fallback) {
 			ignoreNextClick = true;
-			_this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverInterval);
+			_this._loopId = setInterval(_this._emulateDragOver, options.emulateDragOverIntervalMs);
 		} else {
 			// Undo what was set in _prepareDragStart before drag started
 			off(document, 'mouseup', _this._onDrop);

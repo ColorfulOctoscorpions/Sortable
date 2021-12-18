@@ -262,7 +262,7 @@ const autoScroll = throttle(function(evt, options, rootEl, isFallback) {
 					}
 
 					scrollBy(autoScrolls[this.layer].el, scrollOffsetX, scrollOffsetY);
-				}).bind({layer: layersOut}), this.options.autoScrollIntervalMs);
+				}).bind({layer: layersOut}), options.autoScrollIntervalMs);
 			}
 		}
 		layersOut++;
