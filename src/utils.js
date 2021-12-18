@@ -492,10 +492,10 @@ function isRectEqual(rect1, rect2) {
 }
 
 
-let _throttleTimeout;
 function throttle(callback, ms) {
-	return function () {
-		if (!_throttleTimeout) {
+	let throttleTimeout = null;
+	const f = function () {
+		if (!throttleTimeout) {
 			let args = arguments,
 				_this = this;
 
@@ -505,17 +505,18 @@ function throttle(callback, ms) {
 				callback.apply(_this, args);
 			}
 
-			_throttleTimeout = setTimeout(function () {
-				_throttleTimeout = void 0;
+			throttleTimeout = setTimeout(function () {
+				throttleTimeout = null;
 			}, ms);
 		}
 	};
-}
-
-
-function cancelThrottle() {
-	clearTimeout(_throttleTimeout);
-	_throttleTimeout = void 0;
+	f.cancel = () => {
+		if (throttleTimeout !== null) {
+			clearTimeout(throttleTimeout);
+		}
+		throttleTimeout = null;
+	}
+	return f;
 }
 
 
@@ -586,7 +587,6 @@ export {
 	extend,
 	isRectEqual,
 	throttle,
-	cancelThrottle,
 	scrollBy,
 	clone,
 	setRect,

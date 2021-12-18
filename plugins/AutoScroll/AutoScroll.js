@@ -3,7 +3,6 @@ import {
 	off,
 	css,
 	throttle,
-	cancelThrottle,
 	scrollBy,
 	getParentAutoScrollElement,
 	expando,
@@ -78,7 +77,7 @@ function AutoScrollPlugin() {
 
 			clearPointerElemChangedInterval();
 			clearAutoScrolls();
-			cancelThrottle();
+			autoScroll.cancel();
 		},
 
 		nulling() {
