@@ -1085,6 +1085,23 @@
     if (!supportCssPointerEvents && ghostEl) {
       css(ghostEl, 'display', '');
     }
+  };
+
+  _getChildIncludingDragged = function (el, childNum, options) {
+    // Note: I always call getChild with includeDragEl=false, so I don't need
+    // to check if the actual element is in el or not. We only check the logical
+    // position.
+    if (el === parentEl && childNum >= newIndex) {
+      if (childNum == newIndex) {
+        // That is a bit shady, as this element is in a completely different place.
+        // However, I expect callers to treat it as a special case.
+        return dragEl;
+      } else {
+        getChild(el, childNum - 1, options);
+      }
+    } else {
+      getChild(el, childNum, options);
+    }
   }; // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 
 
@@ -1970,7 +1987,7 @@
           }
         } else if (elLastChild && _ghostIsFirst(evt, vertical, this)) {
           // Insert to start of list
-          let firstChild = getChild(el, 0, options, true);
+          let firstChild = _getChildIncludingDragged(el, 0, options);
 
           if (firstChild === dragEl) {
             return completed(false);
@@ -2096,11 +2113,12 @@
       // // Get the index of the dragged element within its parent
       // newIndex = index(dragEl);
       // newDraggableIndex = index(dragEl, options.draggable);
-      // // KILL THE PLUGIN SUPPORT.
-      // pluginEvent('drop', this, {
-      // 	evt
-      // });
-      // parentEl = dragEl && dragEl.parentNode;
+      // We need this call for autoscroll to disable, but we don't keep
+      // the original behavior of looking at what it does with dragEl.
+
+      pluginEvent('drop', this, {
+        evt
+      }); // parentEl = dragEl && dragEl.parentNode;
       // // Get again after plugin event
       // newIndex = index(dragEl);
       // newDraggableIndex = index(dragEl, options.draggable);
@@ -2501,7 +2519,9 @@
   }
 
   function _ghostIsFirst(evt, vertical, sortable) {
-    let rect = getRect(getChild(sortable.el, 0, sortable.options, true));
+    let rect = getRect(getChild(sortable.el, 0, sortable.options
+    /*, true*/
+    ));
     const spacer = 10;
     return vertical ? evt.clientX < rect.left - spacer || evt.clientY < rect.top && evt.clientX < rect.right : evt.clientY < rect.top - spacer || evt.clientY < rect.bottom && evt.clientX < rect.left;
   }
@@ -2698,7 +2718,9 @@
         forceAutoScrollFallback: false,
         scrollSensitivity: 30,
         scrollSpeed: 10,
-        bubbleScroll: true
+        bubbleScroll: true,
+        autoScrollIntervalMs: 24,
+        autoScrollFallbackIntervalMs: 10
       }; // Bind all private methods
 
       for (let fn in this) {
@@ -2783,7 +2805,7 @@
               }
 
               autoScroll(evt, this.options, newElem, fallback);
-            }, 10);
+            }, this.options.autoScrollFallbackIntervalMs);
             lastAutoScrollX = x;
             lastAutoScrollY = y;
           }
@@ -2906,7 +2928,7 @@
             scrollBy(autoScrolls[this.layer].el, scrollOffsetX, scrollOffsetY);
           }.bind({
             layer: layersOut
-          }), 24);
+          }), this.options.autoScrollIntervalMs);
         }
       }
 

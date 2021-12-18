@@ -32,7 +32,9 @@ function AutoScrollPlugin() {
 			forceAutoScrollFallback: false,
 			scrollSensitivity: 30,
 			scrollSpeed: 10,
-			bubbleScroll: true
+			bubbleScroll: true,
+			autoScrollIntervalMs: 24,
+			autoScrollFallbackIntervalMs: 10,
 		};
 
 		// Bind all private methods
@@ -129,7 +131,7 @@ function AutoScrollPlugin() {
 							clearAutoScrolls();
 						}
 						autoScroll(evt, this.options, newElem, fallback);
-					}, 10);
+					}, this.options.autoScrollFallbackIntervalMs);
 					lastAutoScrollX = x;
 					lastAutoScrollY = y;
 				}
@@ -260,7 +262,7 @@ const autoScroll = throttle(function(evt, options, rootEl, isFallback) {
 					}
 
 					scrollBy(autoScrolls[this.layer].el, scrollOffsetX, scrollOffsetY);
-				}).bind({layer: layersOut}), 24);
+				}).bind({layer: layersOut}), this.options.autoScrollIntervalMs);
 			}
 		}
 		layersOut++;
