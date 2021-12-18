@@ -523,35 +523,45 @@ function debounce(callback, ms) {
   let debounceTimeout = null;
   let lastThis = null;
   let lastArgs = null;
+  let lastCallTime = 0;
 
-  const f = function () {
+  const f = function (...args) {
+    const currentTime = Date.now();
+
     if (debounceTimeout) {
-      // We are in a debounce period. Update the call arguments for the
-      // call that will happen when the debounce ends.
+      // We are in a debounce period with a timeout already set.
+      // Update the call arguments for the call that will happen
+      // when the debounce ends.
       lastThis = this;
-      lastArgs = arguments;
-    } else {
-      // We are past the last debounce period, call the function immediately,
-      // then start a new debounce period.
-      if (arguments.length === 1) {
-        callback.call(this, arguments[0]);
+      lastArgs = args; // console.log(currentTime, 'debounced call updated');
+    } else if (currentTime >= lastCallTime + ms) {
+      // We are past the last debounce period, call the function immediately.
+      // This will start a new debounce period.
+      // console.log(currentTime, 'debounced function direct call, ', currentTime - lastCallTime, ' ms after last call');
+      if (args.length === 1) {
+        callback.call(this, args[0]);
       } else {
-        callback.apply(this, arguments);
+        callback.apply(this, args);
       }
 
+      lastCallTime = currentTime;
+    } else {
+      // console.log(currentTime, 'debounced call scheduled in ', lastCallTime + ms - currentTime, ' ms');
+      // We are in a debounce period and this is the first call.
+      lastThis = this;
+      lastArgs = args;
       debounceTimeout = setTimeout(function () {
-        debounceTimeout = null;
+        debounceTimeout = null; // console.log(currentTime, 'debounced call executed, ', Date.now() - lastCallTime, ' ms after last call');
 
-        if (lastArgs) {
-          if (lastArgs.length === 1) {
-            callback.call(lastThis, lastArgs[0]);
-          } else {
-            callback.apply(lastThis, lastArgs);
-          }
-
-          lastThis = lastArgs = null;
+        if (lastArgs.length === 1) {
+          callback.call(lastThis, lastArgs[0]);
+        } else {
+          callback.apply(lastThis, lastArgs);
         }
-      }, ms);
+
+        lastThis = lastArgs = null;
+        lastCallTime = Date.now(); // This is in the timeout, so currentTime is outdated.
+      }, lastCallTime + ms - currentTime);
     }
   };
 
@@ -562,6 +572,7 @@ function debounce(callback, ms) {
     }
 
     lastThis = lastArgs = null;
+    lastCallTime = 0;
   };
 
   return f;
