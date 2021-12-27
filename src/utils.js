@@ -6,13 +6,25 @@ const captureMode = {
 	passive: false
 };
 
+const instrumentedHandlers = new Map();
+
 function on(el, event, fn) {
-	el.addEventListener(event, fn, !IE11OrLess && captureMode);
+	let instrumented = instrumentedHandlers.get(fn);
+	if (!instrumented) {
+		instrumented = (e) => {
+			console.log(event, e, fn);
+			return fn(e);
+		};
+		instrumentedHandlers.set(fn, instrumented);
+	}
+	console.log('on ', event);
+	el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 
 function off(el, event, fn) {
-	el.removeEventListener(event, fn, !IE11OrLess && captureMode);
+	console.log('off ', event);
+	el.removeEventListener(event, instrumentedHandlers.get(fn), !IE11OrLess && captureMode);
 }
 
 function matches(/**HTMLElement*/el, /**String*/selector) {
