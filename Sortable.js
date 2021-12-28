@@ -48,26 +48,37 @@
     passive: false
   };
   const instrumentedHandlers = new Map();
+  const namedFnRegex = /^function ([a-z][A-z]\w+)\(([^)]*)\)/;
+
+  function makeFnString(fn) {
+    const m = namedFnRegex.exec(fn);
+    return m ? m[0] : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
+  }
 
   function on(el, event, fn) {
     let instrumented = instrumentedHandlers.get(fn);
+    const fnStr = makeFnString(fn);
 
     if (!instrumented) {
       instrumented = e => {
-        console.log(event, e, fn);
-        return fn(e);
+        const cancelable = e.cancelable;
+        const alreadyPrevented = e.defaultPrevented;
+        const result = fn(e);
+        console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, fnStr);
+        return result;
       };
 
       instrumentedHandlers.set(fn, instrumented);
     }
 
-    console.log('on ', event);
+    console.log('on', event, el, fnStr);
     el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
   }
 
   function off(el, event, fn) {
-    console.log('off ', event);
-    el.removeEventListener(event, instrumentedHandlers.get(fn), !IE11OrLess && captureMode);
+    let instrumented = instrumentedHandlers.get(fn);
+    console.log('off', event, el);
+    el.removeEventListener(event, instrumented, !IE11OrLess && captureMode);
   }
 
   function matches(
@@ -1058,8 +1069,9 @@
     if (!supportCssPointerEvents && ghostEl) {
       css(ghostEl, 'display', '');
     }
-  }; // #1184 fix - Prevent click event on fallback if dragged but item not changed position
+  };
 
+  console.log('supportDraggable:', supportDraggable); // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 
   if (documentExists) {
     document.addEventListener('click', function (evt) {
@@ -1073,7 +1085,7 @@
     }, true);
   }
 
-  let nearestEmptyInsertDetectEvent = function (evt) {
+  let nearestEmptyInsertDetectEvent = function nearestEmptyInsertDetectEvent(evt) {
     if (dragEl) {
       evt = evt.touches ? evt.touches[0] : evt;
 
@@ -1098,7 +1110,7 @@
     }
   };
 
-  let _checkOutsideTargetEl = function (evt) {
+  let _checkOutsideTargetEl = function _checkOutsideTargetEl(evt) {
     if (dragEl) {
       dragEl.parentNode[expando]._isOutsideThisEl(evt.target);
     }
@@ -1182,6 +1194,7 @@
 
 
     this.nativeDraggable = options.forceFallback ? false : supportDraggable;
+    console.log('this.nativeDraggable:', this.nativeDraggable);
 
     if (this.nativeDraggable) {
       // Touch start threshold cannot be greater than the native dragstart threshold
@@ -1355,7 +1368,8 @@
         this._lastY = (touch || evt).clientY;
         dragEl.style['will-change'] = 'all';
 
-        dragStartFn = function () {
+        dragStartFn = function dragStartFn() {
+          console.log('dragStartFn start');
           pluginEvent('delayEnded', _this, {
             evt
           });
@@ -1363,6 +1377,7 @@
           if (Sortable.eventCanceled) {
             _this._onDrop();
 
+            console.log('dragStartFn drop');
             return;
           } // Delayed drag has been triggered
           // we can re-enable the events: touchmove/mousemove
@@ -1372,6 +1387,7 @@
 
           if (!FireFox && _this.nativeDraggable) {
             dragEl.draggable = true;
+            console.log('dragEl.draggable', true, dragEl);
           } // Bind the events: dragstart/dragend
 
 
@@ -1386,6 +1402,7 @@
 
 
           toggleClass(dragEl, options.chosenClass, true);
+          console.log('dragStartFn end');
         }; // Disable "draggable"
 
 
@@ -1402,6 +1419,7 @@
         if (FireFox && this.nativeDraggable) {
           this.options.touchStartThreshold = 4;
           dragEl.draggable = true;
+          console.log('dragEl.draggable', true, dragEl);
         }
 
         pluginEvent('delayStart', this, {
@@ -1430,7 +1448,7 @@
         }
       }
     },
-    _delayedDragTouchMoveHandler: function (
+    _delayedDragTouchMoveHandler: function _delayedDragTouchMoveHandler(
     /** TouchEvent|PointerEvent **/
     e) {
       let touch = e.touches ? e.touches[0] : e;
@@ -1439,7 +1457,7 @@
         this._disableDelayedDrag();
       }
     },
-    _disableDelayedDrag: function () {
+    _disableDelayedDrag: function _disableDelayedDrag() {
       dragEl && _disableDraggable(dragEl);
       clearTimeout(this._dragStartTimer);
 
@@ -1454,11 +1472,12 @@
       off(ownerDocument, 'touchmove', this._delayedDragTouchMoveHandler);
       off(ownerDocument, 'pointermove', this._delayedDragTouchMoveHandler);
     },
-    _triggerDragStart: function (
+    _triggerDragStart: function _triggerDragStart(
     /** Event */
     evt,
     /** Touch */
     touch) {
+      console.log('_triggerDragStart start');
       touch = touch || evt.pointerType == 'touch' && evt;
 
       if (!this.nativeDraggable || touch) {
@@ -1484,6 +1503,8 @@
           window.getSelection().removeAllRanges();
         }
       } catch (err) {}
+
+      console.log('_triggerDragStart end');
     },
     _dragStarted: function (fallback, evt) {
 
@@ -1557,7 +1578,7 @@
         _unhideGhostForTarget();
       }
     },
-    _onTouchMove: function (
+    _onTouchMove: function _onTouchMove(
     /**TouchEvent*/
     evt) {
       if (tapEvt) {
@@ -1657,7 +1678,7 @@
         css(ghostEl, 'transform-origin', tapDistanceLeft / parseInt(ghostEl.style.width) * 100 + '% ' + tapDistanceTop / parseInt(ghostEl.style.height) * 100 + '%');
       }
     },
-    _onDragStart: function (
+    _onDragStart: function _onDragStart(
     /**Event*/
     evt,
     /**boolean*/
@@ -1682,6 +1703,7 @@
         cloneEl = clone(dragEl);
         cloneEl.removeAttribute("id");
         cloneEl.draggable = false;
+        console.log('cloneEl.draggable', false, cloneEl);
         cloneEl.style['will-change'] = '';
 
         this._hideClone();
@@ -1737,7 +1759,7 @@
       }
     },
     // Returns true - if no further action is needed (either inserted or another condition)
-    _onDragOver: function (
+    _onDragOver: function _onDragOver(
     /**Event*/
     evt) {
       let el = this.el,
@@ -2054,7 +2076,7 @@
       off(ownerDocument, 'touchcancel', this._onDrop);
       off(document, 'selectstart', this);
     },
-    _onDrop: function (
+    _onDrop: function _onDrop(
     /**Event*/
     evt) {
       let el = this.el,
@@ -2220,7 +2242,7 @@
 
       this._nulling();
     },
-    _nulling: function () {
+    _nulling: function _nulling() {
       pluginEvent('nulling', this);
       rootEl = dragEl = parentEl = ghostEl = nextEl = cloneEl = lastDownEl = cloneHidden = tapEvt = touchEvt = moved = newIndex = newDraggableIndex = oldIndex = oldDraggableIndex = lastTarget = lastDirection = putSortable = activeGroup = Sortable.dragged = Sortable.ghost = Sortable.clone = Sortable.active = null;
       savedInputChecked.forEach(function (el) {
@@ -2228,7 +2250,7 @@
       });
       savedInputChecked.length = lastDx = lastDy = 0;
     },
-    handleEvent: function (
+    handleEvent: function handleEvent(
     /**Event*/
     evt) {
       switch (evt.type) {
@@ -2460,6 +2482,7 @@
 
   function _disableDraggable(el) {
     el.draggable = false;
+    console.log('_disableDraggable: el.draggable = false', el);
   }
 
   function _unsilent() {
@@ -2579,7 +2602,7 @@
 
 
   if (documentExists) {
-    on(document, 'touchmove', function (evt) {
+    on(document, 'touchmove', function globalTouchmovePreventDefault(evt) {
       if ((Sortable.active || awaitingDragStarted) && evt.cancelable) {
         evt.preventDefault();
       }

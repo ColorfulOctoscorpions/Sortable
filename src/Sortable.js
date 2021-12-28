@@ -296,6 +296,8 @@ let dragEl,
 		}
 	};
 
+console.log('supportDraggable:', supportDraggable);
+
 
 // #1184 fix - Prevent click event on fallback if dragged but item not changed position
 if (documentExists) {
@@ -310,7 +312,7 @@ if (documentExists) {
 	}, true);
 }
 
-let nearestEmptyInsertDetectEvent = function(evt) {
+let nearestEmptyInsertDetectEvent = function nearestEmptyInsertDetectEvent(evt) {
 	if (dragEl) {
 		evt = evt.touches ? evt.touches[0] : evt;
 		let nearest = _detectNearestEmptySortable(evt.clientX, evt.clientY);
@@ -332,7 +334,7 @@ let nearestEmptyInsertDetectEvent = function(evt) {
 };
 
 
-let _checkOutsideTargetEl = function(evt) {
+let _checkOutsideTargetEl = function _checkOutsideTargetEl(evt) {
 	if (dragEl) {
 		dragEl.parentNode[expando]._isOutsideThisEl(evt.target);
 	}
@@ -414,6 +416,7 @@ function Sortable(el, options) {
 
 	// Setup drag mode
 	this.nativeDraggable = options.forceFallback ? false : supportDraggable;
+	console.log('this.nativeDraggable:', this.nativeDraggable);
 
 	if (this.nativeDraggable) {
 		// Touch start threshold cannot be greater than the native dragstart threshold
@@ -585,10 +588,12 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			dragEl.style['will-change'] = 'all';
 
-			dragStartFn = function () {
+			dragStartFn = function dragStartFn() {
+				console.log('dragStartFn start');
 				pluginEvent('delayEnded', _this, { evt });
 				if (Sortable.eventCanceled) {
 					_this._onDrop();
+					console.log('dragStartFn drop');
 					return;
 				}
 				// Delayed drag has been triggered
@@ -597,6 +602,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				if (!FireFox && _this.nativeDraggable) {
 					dragEl.draggable = true;
+					console.log('dragEl.draggable', true, dragEl);
 				}
 
 				// Bind the events: dragstart/dragend
@@ -611,6 +617,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				// Chosen item
 				toggleClass(dragEl, options.chosenClass, true);
+
+				console.log('dragStartFn end');
 			};
 
 			// Disable "draggable"
@@ -630,6 +638,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			if (FireFox && this.nativeDraggable) {
 				this.options.touchStartThreshold = 4;
 				dragEl.draggable = true;
+				console.log('dragEl.draggable', true, dragEl);
 			}
 
 			pluginEvent('delayStart', this, { evt });
@@ -657,7 +666,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 	},
 
-	_delayedDragTouchMoveHandler: function (/** TouchEvent|PointerEvent **/e) {
+	_delayedDragTouchMoveHandler: function _delayedDragTouchMoveHandler(/** TouchEvent|PointerEvent **/e) {
 		let touch = e.touches ? e.touches[0] : e;
 		if (Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY))
 				>= Math.floor(this.options.touchStartThreshold / (this.nativeDraggable && window.devicePixelRatio || 1))
@@ -666,7 +675,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 	},
 
-	_disableDelayedDrag: function () {
+	_disableDelayedDrag: function _disableDelayedDrag() {
 		dragEl && _disableDraggable(dragEl);
 		clearTimeout(this._dragStartTimer);
 
@@ -683,7 +692,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		off(ownerDocument, 'pointermove', this._delayedDragTouchMoveHandler);
 	},
 
-	_triggerDragStart: function (/** Event */evt, /** Touch */touch) {
+	_triggerDragStart: function _triggerDragStart(/** Event */evt, /** Touch */touch) {
+		console.log('_triggerDragStart start');
 		touch = touch || (evt.pointerType == 'touch' && evt);
 
 		if (!this.nativeDraggable || touch) {
@@ -710,6 +720,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			}
 		} catch (err) {
 		}
+		console.log('_triggerDragStart end');
 	},
 
 	_dragStarted: function (fallback, evt) {
@@ -788,7 +799,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	},
 
 
-	_onTouchMove: function (/**TouchEvent*/evt) {
+	_onTouchMove: function _onTouchMove(/**TouchEvent*/evt) {
 		if (tapEvt) {
 			let	options = this.options,
 				fallbackTolerance = options.fallbackTolerance,
@@ -910,7 +921,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 	},
 
-	_onDragStart: function (/**Event*/evt, /**boolean*/fallback) {
+	_onDragStart: function _onDragStart(/**Event*/evt, /**boolean*/fallback) {
 		let _this = this;
 		let dataTransfer = evt.dataTransfer;
 		let options = _this.options;
@@ -926,6 +937,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			cloneEl = clone(dragEl);
 			cloneEl.removeAttribute("id");
 			cloneEl.draggable = false;
+			console.log('cloneEl.draggable', false, cloneEl);
 			cloneEl.style['will-change'] = '';
 
 			this._hideClone();
@@ -989,7 +1001,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 
 	// Returns true - if no further action is needed (either inserted or another condition)
-	_onDragOver: function (/**Event*/evt) {
+	_onDragOver: function _onDragOver(/**Event*/evt) {
 		let el = this.el,
 			target = evt.target,
 			dragRect,
@@ -1335,7 +1347,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		off(document, 'selectstart', this);
 	},
 
-	_onDrop: function (/**Event*/evt) {
+	_onDrop: function _onDrop(/**Event*/evt) {
 		let el = this.el,
 			options = this.options;
 
@@ -1505,7 +1517,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		this._nulling();
 	},
 
-	_nulling: function() {
+	_nulling: function _nulling() {
 		pluginEvent('nulling', this);
 
 		rootEl =
@@ -1545,7 +1557,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		lastDy = 0;
 	},
 
-	handleEvent: function (/**Event*/evt) {
+	handleEvent: function handleEvent(/**Event*/evt) {
 		switch (evt.type) {
 			case 'drop':
 			case 'dragend':
@@ -1781,6 +1793,7 @@ function onMove(fromEl, toEl, dragEl, dragRect, targetEl, targetRect, originalEv
 
 function _disableDraggable(el) {
 	el.draggable = false;
+	console.log('_disableDraggable: el.draggable = false', el);
 }
 
 function _unsilent() {
@@ -1931,7 +1944,7 @@ function _cancelNextTick(id) {
 
 // Fixed #973:
 if (documentExists) {
-	on(document, 'touchmove', function(evt) {
+	on(document, 'touchmove', function globalTouchmovePreventDefault(evt) {
 		if ((Sortable.active || awaitingDragStarted) && evt.cancelable) {
 			evt.preventDefault();
 		}

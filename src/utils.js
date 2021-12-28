@@ -8,23 +8,35 @@ const captureMode = {
 
 const instrumentedHandlers = new Map();
 
+const namedFnRegex = /^function ([a-z][A-z]\w+)\(([^)]*)\)/;
+
+function makeFnString(fn) {
+	const m = namedFnRegex.exec(fn);
+	return m ? m[0] : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
+}
+
 function on(el, event, fn) {
 	let instrumented = instrumentedHandlers.get(fn);
+	const fnStr = makeFnString(fn);
 	if (!instrumented) {
 		instrumented = (e) => {
-			console.log(event, e, fn);
-			return fn(e);
+			const cancelable = e.cancelable;
+			const alreadyPrevented = e.defaultPrevented;
+			const result = fn(e);
+			console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, fnStr);
+			return result;
 		};
 		instrumentedHandlers.set(fn, instrumented);
 	}
-	console.log('on ', event);
+	console.log('on', event, el, fnStr);
 	el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 
 function off(el, event, fn) {
-	console.log('off ', event);
-	el.removeEventListener(event, instrumentedHandlers.get(fn), !IE11OrLess && captureMode);
+	let instrumented = instrumentedHandlers.get(fn);
+	console.log('off', event, el);
+	el.removeEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 function matches(/**HTMLElement*/el, /**String*/selector) {

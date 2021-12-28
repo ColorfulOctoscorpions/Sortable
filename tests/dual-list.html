@@ -26,8 +26,58 @@
 <script src="../Sortable.js"></script>
 
 <script type="text/javascript">
-	new Sortable(document.getElementById('list1'), { group: 'shared' });
-	new Sortable(document.getElementById('list2'), { });
+	for (let elId of ['list1', 'list2']) {
+		new Sortable(document.getElementById(elId), {
+			group: 'shared',
+			direction: 'vertical',
+			animation: 150,
+			fallbackTolerance: 5,
+			delay: 220,
+			delayOnTouchOnly: true,
+			forceFallback: true,
+			// fallbackOnBody: true,
+			emulateDragOverInterval: 200,
+
+			onMove: (event, originalEvent) => {
+				console.log('onMove', event);
+				return true; // Use default.
+			},
+			onClone: (event) => {
+				console.log('onClone', event);
+			},
+			onChoose: (event) => {
+				console.log('onChoose', event);
+			},
+			onStart: (event) => {
+				console.log('onStart', event);
+			},
+			onUnchoose: (event) => {
+				console.log('onUnchoose', event);
+			},
+			onUpdate: (event) => {
+				console.log('onUpdate', event);
+				if (event.newIndex === event.to.children.length) {
+					event.to.append(event.item);
+				} else {
+					event.to.insertBefore(event.item, event.to.children[event.newIndex]);
+				}
+				// Alternatively/complementarly we may want to do some splicing on underlying array.
+				// if (event.from === event.to) {
+				// 	// let spliceIndex = (event.newIndex > event.oldIndex) ? event.newIndex - 1 : event.newIndex;
+				// } else {
+				// 	console.log('Not supported yet?');
+				// }
+			},
+			onRemove: (event) => {
+				console.log('onRemove', event);
+				if (event.newIndex === event.to.children.length) {
+					event.to.append(event.item);
+				} else {
+					event.to.insertBefore(event.item, event.to.children[event.newIndex]);
+				}
+			},
+		});
+	}
 </script>
 
 </body>
