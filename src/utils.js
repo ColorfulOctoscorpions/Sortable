@@ -8,34 +8,47 @@ const captureMode = {
 
 const instrumentedHandlers = new Map();
 
-const namedFnRegex = /^function ([a-z][A-z]\w+)\(([^)]*)\)/;
+const namedFnRegex = /^function ([a-zA-Z_]\w+)\(([^)]*)\)/;
 
 function makeFnString(fn) {
+	// originalFn is set for specific bound functions in Sortable.js specifically
+	// for this purpose.
+	if (fn.originalFn) {
+		return `BoundMethod<${makeFnString(fn.originalFn)}>`;
+	}
 	const m = namedFnRegex.exec(fn);
-	return m ? m[0] : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
+	return m ? m[0].replace(/^function /, 'fn ') : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
 }
 
 function on(el, event, fn) {
 	let instrumented = instrumentedHandlers.get(fn);
-	const fnStr = makeFnString(fn);
 	if (!instrumented) {
 		instrumented = (e) => {
 			const cancelable = e.cancelable;
 			const alreadyPrevented = e.defaultPrevented;
 			const result = fn(e);
-			console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, fnStr);
+			console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, instrumented.fnStr);
 			return result;
 		};
 		instrumentedHandlers.set(fn, instrumented);
+		instrumented.fnStr = makeFnString(fn);
+		if (instrumented.fnStr.indexOf('[native code]') !== -1) {
+			console.log('Event listener is a native function?');
+			console.trace();
+		}
 	}
-	console.log('on', event, el, fnStr);
+	console.log('on', event, el, instrumented.fnStr);
 	el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 
 function off(el, event, fn) {
 	let instrumented = instrumentedHandlers.get(fn);
-	console.log('off', event, el);
+	if (instrumented) {
+		console.log('off', event, el, instrumented.fnStr);
+	} else {
+		console.log('off', event, el, '<handler never set>', makeFnString(fn));
+	}
 	el.removeEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 

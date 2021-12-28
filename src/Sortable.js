@@ -410,7 +410,9 @@ function Sortable(el, options) {
 	// Bind all private methods
 	for (let fn in this) {
 		if (fn.charAt(0) === '_' && typeof this[fn] === 'function') {
-			this[fn] = this[fn].bind(this);
+			const originalFn = this[fn];
+			this[fn] = originalFn.bind(this);
+			this[fn].originalFn = originalFn;
 		}
 	}
 
@@ -458,7 +460,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		return (typeof this.options.direction === 'function') ? this.options.direction.call(this, evt, target, dragEl) : this.options.direction;
 	},
 
-	_onTapStart: function (/** Event|TouchEvent */evt) {
+	_onTapStart: function _onTapStart(/** Event|TouchEvent */evt) {
 		if (!evt.cancelable) return;
 		let _this = this,
 			el = this.el,
@@ -1328,7 +1330,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 	_ignoreWhileAnimating: null,
 
-	_offMoveEvents: function() {
+	_offMoveEvents: function _offMoveEvents() {
 		off(document, 'mousemove', this._onTouchMove);
 		off(document, 'touchmove', this._onTouchMove);
 		off(document, 'pointermove', this._onTouchMove);
@@ -1337,7 +1339,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		off(document, 'touchmove', nearestEmptyInsertDetectEvent);
 	},
 
-	_offUpEvents: function () {
+	_offUpEvents: function _offUpEvents() {
 		let ownerDocument = this.el.ownerDocument;
 
 		off(ownerDocument, 'mouseup', this._onDrop);

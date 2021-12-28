@@ -42,36 +42,53 @@ const captureMode = {
   passive: false
 };
 const instrumentedHandlers = new Map();
-const namedFnRegex = /^function ([a-z][A-z]\w+)\(([^)]*)\)/;
+const namedFnRegex = /^function ([a-zA-Z_]\w+)\(([^)]*)\)/;
 
 function makeFnString(fn) {
+  // originalFn is set for specific bound functions in Sortable.js specifically
+  // for this purpose.
+  if (fn.originalFn) {
+    return `BoundMethod<${makeFnString(fn.originalFn)}>`;
+  }
+
   const m = namedFnRegex.exec(fn);
-  return m ? m[0] : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
+  return m ? m[0].replace(/^function /, 'fn ') : fn.toString().replace(/\s+/g, ' ').replace(/^function /, 'fn ').slice(0, 40);
 }
 
 function on(el, event, fn) {
   let instrumented = instrumentedHandlers.get(fn);
-  const fnStr = makeFnString(fn);
 
   if (!instrumented) {
     instrumented = e => {
       const cancelable = e.cancelable;
       const alreadyPrevented = e.defaultPrevented;
       const result = fn(e);
-      console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, fnStr);
+      console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, instrumented.fnStr);
       return result;
     };
 
     instrumentedHandlers.set(fn, instrumented);
+    instrumented.fnStr = makeFnString(fn);
+
+    if (instrumented.fnStr.indexOf('[native code]') !== -1) {
+      console.log('Event listener is a native function?');
+      console.trace();
+    }
   }
 
-  console.log('on', event, el, fnStr);
+  console.log('on', event, el, instrumented.fnStr);
   el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 function off(el, event, fn) {
   let instrumented = instrumentedHandlers.get(fn);
-  console.log('off', event, el);
+
+  if (instrumented) {
+    console.log('off', event, el, instrumented.fnStr);
+  } else {
+    console.log('off', event, el, '<handler never set>', makeFnString(fn));
+  }
+
   el.removeEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
@@ -1182,7 +1199,9 @@ function Sortable(el, options) {
 
   for (let fn in this) {
     if (fn.charAt(0) === '_' && typeof this[fn] === 'function') {
-      this[fn] = this[fn].bind(this);
+      const originalFn = this[fn];
+      this[fn] = originalFn.bind(this);
+      this[fn].originalFn = originalFn;
     }
   } // Setup drag mode
 
@@ -1227,7 +1246,7 @@ Sortable.prototype =
   _getDirection: function (evt, target) {
     return typeof this.options.direction === 'function' ? this.options.direction.call(this, evt, target, dragEl) : this.options.direction;
   },
-  _onTapStart: function (
+  _onTapStart: function _onTapStart(
   /** Event|TouchEvent */
   evt) {
     if (!evt.cancelable) return;
@@ -2054,7 +2073,7 @@ Sortable.prototype =
     return false;
   },
   _ignoreWhileAnimating: null,
-  _offMoveEvents: function () {
+  _offMoveEvents: function _offMoveEvents() {
     off(document, 'mousemove', this._onTouchMove);
     off(document, 'touchmove', this._onTouchMove);
     off(document, 'pointermove', this._onTouchMove);
@@ -2062,7 +2081,7 @@ Sortable.prototype =
     off(document, 'mousemove', nearestEmptyInsertDetectEvent);
     off(document, 'touchmove', nearestEmptyInsertDetectEvent);
   },
-  _offUpEvents: function () {
+  _offUpEvents: function _offUpEvents() {
     let ownerDocument = this.el.ownerDocument;
     off(ownerDocument, 'mouseup', this._onDrop);
     off(ownerDocument, 'touchend', this._onDrop);
