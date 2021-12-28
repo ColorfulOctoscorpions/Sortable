@@ -21,24 +21,29 @@ function makeFnString(fn) {
 }
 
 function on(el, event, fn) {
-	let instrumented = instrumentedHandlers.get(fn);
-	if (!instrumented) {
-		instrumented = (e) => {
-			const cancelable = e.cancelable;
-			const alreadyPrevented = e.defaultPrevented;
-			const result = fn(e);
-			console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, instrumented.fnStr);
-			return result;
-		};
-		instrumentedHandlers.set(fn, instrumented);
-		instrumented.fnStr = makeFnString(fn);
-		if (instrumented.fnStr.indexOf('[native code]') !== -1) {
-			console.log('Event listener is a native function?');
-			console.trace();
+	if (typeof fn === 'function') {
+		let instrumented = instrumentedHandlers.get(fn);
+		if (!instrumented) {
+			instrumented = (e) => {
+				const cancelable = e.cancelable;
+				const alreadyPrevented = e.defaultPrevented;
+				const result = fn(e);
+				console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, instrumented.fnStr);
+				return result;
+			};
+			instrumentedHandlers.set(fn, instrumented);
+			instrumented.fnStr = makeFnString(fn);
+			if (instrumented.fnStr.indexOf('[native code]') !== -1) {
+				console.log('Event listener is a native function?');
+				console.trace();
+			}
 		}
+		console.log('on', event, el, instrumented.fnStr);
+		el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
+	} else {
+		console.log('on', event, el, '<not a function>', fn);
+		el.addEventListener(event, fn, !IE11OrLess && captureMode);
 	}
-	console.log('on', event, el, instrumented.fnStr);
-	el.addEventListener(event, instrumented, !IE11OrLess && captureMode);
 }
 
 
