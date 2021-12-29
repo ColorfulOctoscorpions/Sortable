@@ -69,8 +69,23 @@
         instrumented = e => {
           const cancelable = e.cancelable;
           const alreadyPrevented = e.defaultPrevented;
+          console.log('HANDLER START', event, e, cancelable, alreadyPrevented, instrumented.fnStr);
           const result = fn(e);
-          console.log(event, e, cancelable, alreadyPrevented, e.defaultPrevented, instrumented.fnStr);
+          let cancelString = '';
+
+          if (cancelable) {
+            if (alreadyPrevented) {
+              cancelString = 'ALREADY PREVENTED';
+            } else if (e.defaultPrevented) {
+              cancelString = 'DEFAULT PREVENTED';
+            } else {
+              cancelString = 'default action allowed';
+            }
+          } else {
+            cancelString = 'UNCANCELABLE';
+          }
+
+          console.log('HANDLER END', event, cancelString);
           return result;
         };
 
@@ -1260,6 +1275,7 @@
     _onTapStart: function _onTapStart(
     /** Event|TouchEvent */
     evt) {
+      console.log('_onTapStart');
       if (!evt.cancelable) return;
 
       let _this = this,

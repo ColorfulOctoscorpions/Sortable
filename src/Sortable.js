@@ -461,6 +461,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	},
 
 	_onTapStart: function _onTapStart(/** Event|TouchEvent */evt) {
+		console.log('_onTapStart');
 		if (!evt.cancelable) return;
 		let _this = this,
 			el = this.el,
